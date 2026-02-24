@@ -5,6 +5,12 @@ import YAML from "yamljs";
 const app = express();
 const swaggerDocument = YAML.load("./openapi.yaml");
 
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+});
+
 app.use(express.json());
 let properties = [];
 let currentId = 1;
