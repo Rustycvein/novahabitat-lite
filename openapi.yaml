@@ -1,32 +1,65 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: NovaHabitat Lite API
   version: 1.0.0
-  description: API para gestión básica de propiedades inmobiliarias.
+  description: >
+    API First MVP para gestión básica de propiedades y leads.
+    Incluye validaciones de reglas de negocio y auditoría mínima.
 
 servers:
-  - url: http://localhost:3000 
+  - url: https://your-railway-url.up.railway.app
+    description: Production
+  - url: http://localhost:3000
+    description: Local
 
 paths:
+
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: API funcionando correctamente
+
   /properties:
     post:
-      summary: Crear una nueva propiedad
+      summary: Crear propiedad
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PropertyInput'
+              $ref: '#/components/schemas/CreateProperty'
       responses:
         '201':
-          description: Propiedad creada correctamente
+          description: Propiedad creada
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Property'
+        '400':
+          description: Datos inválidos
 
     get:
-      summary: Listar todas las propiedades
+      summary: Listar y filtrar propiedades
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [Available, Reserved, Rented, Inactive]
+        - in: query
+          name: minPrice
+          schema:
+            type: number
+        - in: query
+          name: maxPrice
+          schema:
+            type: number
+        - in: query
+          name: locationKeyword
+          schema:
+            type: string
       responses:
         '200':
           description: Lista de propiedades
@@ -37,64 +70,311 @@ paths:
                 items:
                   $ref: '#/components/schemas/Property'
 
-  /properties/{id}/status:
-    patch:
-      summary: Cambiar estado de una propiedad
+  /properties/{id}:
+    put:
+      summary: Editar propiedad
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
-            type: integer
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - status
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - available
-                    - reserved
+              $ref: '#/components/schemas/UpdateProperty'
       responses:
         '200':
-          description: Estado actualizado correctamente
+          description: Propiedad actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '400':
+          description: Datos inválidos
         '404':
           description: Propiedad no encontrada
 
+  /properties/{id}/status:
+    patch:
+      summary: Cambiar estado de propiedad
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePropertyStatus'
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '400':
+          description: Estado inválido
+        '404':
+          description: Propiedad no encontrada
+        '409':
+          description: Violación de regla de negocio
+
+  /leads:
+    post:
+      summary: Crear lead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLead'
+      responses:
+        '201':
+          description: Lead creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+        '400':
+          description: Datos inválidos
+
+    get:
+      summary: Buscar leads por canal y estado
+      parameters:
+        - in: query
+          name: channel
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [New, Contacted, Closed, Lost]
+      responses:
+        '200':
+          description: Lista de leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lead'
+
+  /leads/{id}:
+    get:
+      summary: Consultar lead con timeline
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lead encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+        '404':
+          description: Lead no encontrado
+
+  /leads/{id}/status:
+    patch:
+      summary: Cambiar estado de lead
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeLeadStatus'
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+        '400':
+          description: Estado inválido
+        '404':
+          description: Lead no encontrado
+        '409':
+          description: Violación de regla de negocio
+
+  /leads/{id}/interactions:
+    post:
+      summary: Registrar interacción en lead
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInteraction'
+      responses:
+        '201':
+          description: Interacción creada
+        '400':
+          description: Datos inválidos
+        '404':
+          description: Lead no encontrado
+
 components:
   schemas:
+
     Property:
       type: object
       properties:
         id:
-          type: integer
+          type: string
         title:
+          type: string
+        location:
           type: string
         price:
           type: number
-        location:
-          type: string
         status:
           type: string
-          enum:
-            - available
-            - reserved
+          enum: [Available, Reserved, Rented, Inactive]
+        auditTrail:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditRecord'
 
-    PropertyInput:
+    CreateProperty:
       type: object
-      required:
-        - title
-        - price
-        - location
+      required: [title, location, price, status]
       properties:
         title:
           type: string
-        price:
-          type: number
         location:
           type: string
+        price:
+          type: number
+          minimum: 0
+        status:
+          type: string
+          enum: [Available, Reserved, Rented, Inactive]
+
+    UpdateProperty:
+      type: object
+      properties:
+        title:
+          type: string
+        location:
+          type: string
+        price:
+          type: number
+          minimum: 0
+
+    ChangePropertyStatus:
+      type: object
+      required: [status, changedBy]
+      properties:
+        status:
+          type: string
+          enum: [Available, Reserved, Rented, Inactive]
+        changedBy:
+          type: string
+        reason:
+          type: string
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        channel:
+          type: string
+        budget:
+          type: number
+        status:
+          type: string
+          enum: [New, Contacted, Closed, Lost]
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interaction'
+        auditTrail:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditRecord'
+
+    CreateLead:
+      type: object
+      required: [name, channel, budget]
+      properties:
+        name:
+          type: string
+        channel:
+          type: string
+        budget:
+          type: number
+          minimum: 0
+
+    ChangeLeadStatus:
+      type: object
+      required: [status, changedBy]
+      properties:
+        status:
+          type: string
+          enum: [New, Contacted, Closed, Lost]
+        changedBy:
+          type: string
+
+    CreateInteraction:
+      type: object
+      required: [type, content]
+      properties:
+        type:
+          type: string
+          enum: [NOTE]
+        content:
+          type: string
+
+    Interaction:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AuditRecord:
+      type: object
+      properties:
+        previousStatus:
+          type: string
+        newStatus:
+          type: string
+        changedBy:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
