@@ -12,6 +12,9 @@ let currentId = 1;
 
 const VALID_STATUS = ["Available", "Reserved", "Rented", "Inactive"];
 
+app.get("/health", (req, res) => {
+  res.status(200).send("API funcionando correctamente");
+});
 
 app.post("/properties", (req, res) => {
   const { title, price, location } = req.body;

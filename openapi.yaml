@@ -7,7 +7,7 @@ info:
     Incluye validaciones de reglas de negocio y auditoría mínima.
 
 servers:
-  - url: https://your-railway-url.up.railway.app
+  - url: https://novahabitat-lite-production.up.railway.app/
     description: Production
   - url: http://localhost:3000
     description: Local
