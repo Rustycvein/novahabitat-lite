@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaHabitat | Lite</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <h1>NovaHabitat <span class="badge-lite">LITE</span></h1>
+            <div id="api-status" class="status-indicator">Sincronizando...</div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <div class="main-content">
+            <section class="card-panel">
+                <div class="panel-header">
+                    <h2>Inventario de Propiedades</h2>
+                    <div class="filter-bar">
+                        <select id="filter-status">
+                            <option value="">Estado: Todos</option>
+                            <option value="Available">Disponible</option>
+                            <option value="Reserved">Reservada</option>
+                            <option value="Rented">Rentada</option>
+                        </select>
+                        <button onclick="loadProperties()" class="btn-icon">Actualizar</button>
+                    </div>
+                </div>
+                <div id="properties-list" class="property-grid"></div>
+            </section>
+        </div>
+
+        <aside class="sidebar-content">
+            <section class="card-panel">
+                <h3>Registro de Propiedad</h3>
+                <form id="property-form" class="stack-form">
+                    <input type="text" id="prop-title" placeholder="Título del inmueble" required>
+                    <input type="number" id="prop-price" placeholder="Precio (USD)" required>
+                    <input type="text" id="prop-location" placeholder="Ubicación exacta" required>
+                    <button type="submit" class="btn-action">Guardar en Sistema</button>
+                </form>
+            </section>
+
+            <section class="card-panel">
+                <h3>Gestión de Leads</h3>
+                <form id="lead-form" class="stack-form">
+                    <input type="text" id="lead-name" placeholder="Nombre completo" required>
+                    <input type="text" id="lead-channel" placeholder="Origen (WhatsApp, IG...)" required>
+                    <input type="number" id="lead-budget" placeholder="Presupuesto" required>
+                    <button type="submit" class="btn-action btn-alt">Registrar Lead</button>
+                </form>
+                <div id="leads-message" class="toast-msg"></div>
+            </section>
+        </aside>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
